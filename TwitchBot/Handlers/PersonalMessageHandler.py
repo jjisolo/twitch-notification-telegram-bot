@@ -1,13 +1,16 @@
 from aiogram          import types, Bot
-from TwitchBotBase    import TelegramBotDispatcher, TelegramBot
+from TwitchBotBase    import TelegramBotDispatcher, TelegramBot, AddBroadcasterForm, RemBroadcasterForm, FSMContext
 from TwitchBotBase    import UsersDatabase
 from TwitchBotBase    import TwitchApi
 
-_TELEGRAM_DP_STARTMESSAGE           = "🍄Привет, {}! Теперь ты будешь получать уведомления, когда один из моих любимых стримеров начнет трансляцию!🍄"
+import TwitchBotBase
+
+_TELEGRAM_DP_STARTMESSAGE           = "Привет, {}! Теперь ты будешь получать уведомления, когда один из моих любимых стримеров начнет трансляцию!"
+_TELEGRAM_DP_CHOOSE_VARIANT         = "Пожалуйста выбери одну из опций ниже"
 _TELEGRAM_DP_NO_BROADCASTERS        = "{}, ты не выбрал ни одного стримера, попробуй использовать команду !ttv [имя стримера]!"
-_TELEGRAM_DP_CURRENT_BROADCASTS     = "{}, вот список стримеров которых ты смотришь, и их live-статус: " 
-_TELEGRAM_DP_NOT_STREAMING_TEMPLATE = "❌ <b>{}</b>({}) - Оффлайн"
-_TELEGRAM_DP_IS_STREAMING_TEMPLATE  = "✅ <b>{}</b>({}) - Онлайн"
+_TELEGRAM_DP_CURRENT_BROADCASTS     = "Вот список стримеров которых ты смотришь, и их live-статус: " 
+_TELEGRAM_DP_NOT_STREAMING_TEMPLATE = "💤 <b>{}</b>({}) - Оффлайн"
+_TELEGRAM_DP_IS_STREAMING_TEMPLATE  = "💢 <b>{}</b>({}) - Онлайн"
 _TELEGRAM_DP_BROADCASTER_REMOVED    = "Стример <b>{}</b> был успешно удален из списка отслеживаемых"
 _TELEGRAM_DP_BROADCASTER_ADDED      = "Вы теперь отслеживаете стримера <b>{}</b>"
 _TELEGRAM_DP_BROADCASTER_EXISTS     = "Стример {} уже был добавлен в список отслеживаемых"
@@ -32,21 +35,39 @@ TELEGRAM_DP_BROADCASTER_TURNED_ON_LIST = [
     _TELEGRAM_DP_BROADCASTER_TURNED_ON_8
 ]
 
-@TelegramBotDispatcher.message_handler(commands=["start"])
-async def Start(MessageIn : types.Message) -> None:
-    if not UsersDatabase.UsertExists(MessageIn.from_user.id):
-        UsersDatabase.AddUser(MessageIn.from_user.id)
-    await MessageIn.answer(_TELEGRAM_DP_STARTMESSAGE.format(MessageIn.from_user.first_name))    
-    
-@TelegramBotDispatcher.message_handler(commands=["remove_ttv_sreamer"], commands_prefix="!")
-async def RemoveFollowedAccount(MessageIn : types.Message) -> None:
-    BroadcasterName = MessageIn.text.split()[1]
-    UsersDatabase.RemoveLinkedAccount(MessageIn.from_user.id, BroadcasterName)
-    await MessageIn.answer(_TELEGRAM_DP_BROADCASTER_REMOVED.format(BroadcasterName))
+StartFollowBroadcasterInlineButton = types.InlineKeyboardButton('Начать отслеживать стримера', callback_data='!add_ttv_streamer')
+EndFollowBroadcasterInlineButton   = types.InlineKeyboardButton('Прекратить отслеживать стримера', callback_data='!remove_ttv_streamer')
+WatchFollowBroadcasterInlineButton = types.InlineKeyboardButton('Отслеживаемые стримеры', callback_data='!get_followed_accounts')
+StartInlineKeyboard = types.InlineKeyboardMarkup()
+StartInlineKeyboard.add(StartFollowBroadcasterInlineButton)
+StartInlineKeyboard.add(EndFollowBroadcasterInlineButton)
+StartInlineKeyboard.add(WatchFollowBroadcasterInlineButton)
 
-@TelegramBotDispatcher.message_handler(commands=["add_ttv_streamer"], commands_prefix="!")
-async def AddFollowedAccount(MessageIn : types.Message) -> None:
-    BroadcasterName = MessageIn.text.split()[1]
+@TelegramBotDispatcher.callback_query_handler(lambda c: c.data and c.data.startswith("!"))
+async def process_inline_buttons_callbacks(callback_query: types.CallbackQuery):
+    if callback_query.data[1:] == "add_ttv_streamer":
+        await AddBroadcasterForm.BroadcasterNickname.set()        
+        await TelegramBot.send_message(callback_query.from_user.id, text="Введи ник стримера на твиче которого ты хочешь отслеживать")
+    if callback_query.data[1:] == "remove_ttv_streamer":
+        await RemBroadcasterForm.BroadcasterNickname.set()        
+        await TelegramBot.send_message(callback_query.from_user.id, text="Введи ник стримера на твиче которого ты хочешь прекратить отслеживать")
+    if callback_query.data[1:] == "get_followed_accounts":
+        LinkedTwitchAccounts = UsersDatabase.GetLinkedTwitchAccounts(callback_query.from_user.id)
+        MessageAnswer = _TELEGRAM_DP_CURRENT_BROADCASTS
+        if(len(LinkedTwitchAccounts)):
+            for TwitchAccount in LinkedTwitchAccounts:
+                TwitchAccountName = TwitchAccount[2]
+                MessageAnswer    += "\n"
+                if TwitchApi.CheckUserIsLive(TwitchAccountName):
+                    MessageAnswer += "\n" + _TELEGRAM_DP_IS_STREAMING_TEMPLATE.format(TwitchAccountName, "twitch")
+                else:
+                    MessageAnswer += "\n" + _TELEGRAM_DP_NOT_STREAMING_TEMPLATE.format(TwitchAccountName, "twitch")
+        await TelegramBot.send_message(callback_query.from_user.id, text=MessageAnswer)    
+
+@TelegramBotDispatcher.message_handler(state=AddBroadcasterForm.BroadcasterNickname)
+async def process_name(MessageIn: types.Message, state: FSMContext):
+    await state.finish()
+    BroadcasterName = MessageIn.text
     LinkedTwitchAccounts = UsersDatabase.GetLinkedTwitchAccounts(MessageIn.from_user.id)
     if(len(LinkedTwitchAccounts)):
         for TwitchAccount in LinkedTwitchAccounts:
@@ -54,20 +75,22 @@ async def AddFollowedAccount(MessageIn : types.Message) -> None:
                 await MessageIn.answer(_TELEGRAM_DP_BROADCASTER_EXISTS.format(BroadcasterName)) 
                 return
     UsersDatabase.AddLinkedAccount(MessageIn.from_user.id, BroadcasterName)
-    await MessageIn.answer(_TELEGRAM_DP_BROADCASTER_ADDED.format(BroadcasterName))   
+    await MessageIn.reply(_TELEGRAM_DP_BROADCASTER_ADDED.format(BroadcasterName))
 
-@TelegramBotDispatcher.message_handler(commands=['get_linked_accounts'])
-async def CurrentBroadCasts(MessageIn : types.Message) -> None:
-    LinkedTwitchAccounts = UsersDatabase.GetLinkedTwitchAccounts(MessageIn.from_user.id)
-    if(len(LinkedTwitchAccounts)):
-        MessageAnswer = _TELEGRAM_DP_CURRENT_BROADCASTS.format(MessageIn.from_user.first_name)
-        for TwitchAccount in LinkedTwitchAccounts:
-            TwitchAccountName = TwitchAccount[2]
-            MessageAnswer    += "\n"
-            if TwitchApi.CheckUserIsLive(TwitchAccountName):
-                MessageAnswer += "\n" + _TELEGRAM_DP_IS_STREAMING_TEMPLATE.format(TwitchAccountName, "twitch")
-            else:
-                MessageAnswer += "\n" + _TELEGRAM_DP_NOT_STREAMING_TEMPLATE.format(TwitchAccountName, "twitch")
-    else:
-        MessageAnswer = _TELEGRAM_DP_NO_BROADCASTERS.format(MessageIn.from_user.first_name)
-    await MessageIn.answer(MessageAnswer)    
+@TelegramBotDispatcher.message_handler(state=RemBroadcasterForm.BroadcasterNickname)
+async def process_name(MessageIn: types.Message, state: FSMContext):
+    await state.finish()
+    BroadcasterName = MessageIn.text
+    UsersDatabase.RemoveLinkedAccount(MessageIn.from_user.id, BroadcasterName)
+    await MessageIn.answer(_TELEGRAM_DP_BROADCASTER_REMOVED.format(BroadcasterName), reply_markup=types.ReplyKeyboardRemove())
+
+@TelegramBotDispatcher.message_handler(commands=["menu"])
+async def Menu(MessageIn : types.Message) -> None:
+    await MessageIn.answer(_TELEGRAM_DP_CHOOSE_VARIANT, reply_markup=StartInlineKeyboard)
+
+@TelegramBotDispatcher.message_handler(commands=["start"])
+async def Start(MessageIn : types.Message) -> None:
+    if not UsersDatabase.UsertExists(MessageIn.from_user.id):
+        UsersDatabase.AddUser(MessageIn.from_user.id)
+    await MessageIn.answer(_TELEGRAM_DP_STARTMESSAGE.format(MessageIn.from_user.first_name), reply_markup=types.ReplyKeyboardRemove())    
+    await MessageIn.answer(_TELEGRAM_DP_CHOOSE_VARIANT, reply_markup=StartInlineKeyboard)

@@ -31,22 +31,29 @@ async def ParseBroadcasters() -> None:
 
         Notifications = UsersDatabase.GetPendingNotifies()
         for Notification in Notifications:
-            if not UsersDatabase.GetNotifyStatus(Notification.TelegramUserID, Notification.TwitchBroadcasterName):
-                MessageChoosed = random.choice(TELEGRAM_DP_BROADCASTER_TURNED_ON_LIST)
-                MessageChoosed = MessageChoosed.format(Notification.TwitchBroadcasterName)
-                UsersDatabase.SetNotifyStatus(Notification.TelegramUserID, Notification.TwitchBroadcasterName, False)
-                await TelegramBot.send_message(Notification.TelegramUserID, MessageChoosed)
+            if(Notification.TwitchBroadcasterName in ActiveBroadcasters):
+                if not UsersDatabase.GetNotifyStatus(Notification.TelegramUserID, Notification.TwitchBroadcasterName):
+                    MessageChoosed = random.choice(TELEGRAM_DP_BROADCASTER_TURNED_ON_LIST)
+                    MessageChoosed = MessageChoosed.format(Notification.TwitchBroadcasterName)
+                    UsersDatabase.SetNotifyStatus(Notification.TelegramUserID, Notification.TwitchBroadcasterName, False)
+                    Button   = types.InlineKeyboardButton("Перейти 🌐", url="twitch.tv/" + Notification.TwitchBroadcasterName)
+                    Keyboard = types.InlineKeyboardMarkup()
+                    Keyboard.add(Button)
+                    await TelegramBot.send_message(Notification.TelegramUserID, MessageChoosed, reply_markup=Keyboard)
         
-        for (ActiveBroadcaster, InActiveBroadcaster) in zip(ActiveBroadcasters, InActiveBroadcasters):
+        for ActiveBroadcaster in ActiveBroadcasters:
             for DistinctUser in DistinctUsers:
                 DistincUserTranslated = DistinctUser[0]
                 if(not UsersDatabase.GetNotifyStatus(DistincUserTranslated, ActiveBroadcaster)):
                     UsersDatabase.SetNotifyStatus(DistincUserTranslated, ActiveBroadcaster, True)
-                else:
-                    DistincUserTranslated = DistinctUser[0]
+
+        for InActiveBroadcaster in InActiveBroadcasters:
+            for DistinctUser in DistinctUsers:
+                DistincUserTranslated = DistinctUser[0]
+                if(UsersDatabase.GetNotifyStatus(DistincUserTranslated, InActiveBroadcaster)):
                     UsersDatabase.SetNotifyStatus(DistincUserTranslated, InActiveBroadcaster, False)
     
-        await asyncio.sleep(20)
+        await asyncio.sleep(1)
 
 async def Main() -> None:
     await asyncio.gather(

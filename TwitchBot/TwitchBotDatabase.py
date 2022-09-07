@@ -98,7 +98,7 @@ class TwitchBotDataBase(object):
         """
         Notifications = []
         
-        DataBaseExecutionResult = self.Cursor.execute("SELECT followed_account, users_id FROM linked_accounts WHERE notified=1")
+        DataBaseExecutionResult = self.Cursor.execute("SELECT followed_account, users_id FROM linked_accounts WHERE notified=0")
         DataBaseExecutionResult = DataBaseExecutionResult.fetchall()
 
         for FollowedAccountPendingNotify in DataBaseExecutionResult:
