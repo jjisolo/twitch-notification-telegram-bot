@@ -121,6 +121,17 @@ class TwitchBotDataBase(object):
         self.Cursor.execute("UPDATE linked_accounts SET notified="+NotifyValue+" WHERE followed_account='"+LinkedAccountName+"'")
         return self.Connection.commit()
 
+    def GetNotifyStatus(self, UserID : typing.Union[str, int], LinkedAccountName : str) -> bool:
+        """
+        Set notification flags to Users.
+        
+        :param UserID(union: string, integer): Telegram ID of the user.
+        :param LinkedAccountName(string): Twitch account name of the broadcaster.
+        :param boolean: 0 means not notified, 1 means notified indeed.
+        """
+        Result = self.Cursor.execute("SELECT notified FROM linked_accounts WHERE users_id=? AND followed_account=?", (self.__GetUserID(UserID), LinkedAccountName))
+        return Result.fetchone()[0]
+
     def AddLinkedAccount(self, UserID : typing.Union[str, int], LinkedAccountName : str) -> None:
         """
         Add followed Twitch account to the linked_accounts table

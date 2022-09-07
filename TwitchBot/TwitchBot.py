@@ -7,9 +7,15 @@ from Handlers.PersonalMessageHandler import TELEGRAM_DP_BROADCASTER_TURNED_ON_LI
 import asyncio, itertools, random
 
 async def DispatcherStartPolling() -> None:
+    """
+    Start polling of the bot dispatcher in async loop.
+    """
     await TelegramBotDispatcher.start_polling()
 
 async def ParseBroadcasters() -> None:
+    """
+    Parse active broadcasters, notify users, that are followed them.
+    """
     while True:
         DistinctBroadcasters = UsersDatabase.GetDistinctAccounts()
         DistinctUsers        = UsersDatabase.GetDistinctUsers()
@@ -23,23 +29,24 @@ async def ParseBroadcasters() -> None:
             else:
                 InActiveBroadcasters.append(BroadcasterTranslatedName)
 
-        for ActiveBroadcaster in ActiveBroadcasters:
-            for DistinctUser in DistinctUsers:
-                DistincUserTranslated = DistinctUser[0]
-                UsersDatabase.SetNotifyStatus(DistincUserTranslated, ActiveBroadcaster, True)
-
-        for InActiveBroadcaster in InActiveBroadcasters:
-            for DistinctUser in DistinctUsers:
-                DistincUserTranslated = DistinctUser[0]
-                UsersDatabase.SetNotifyStatus(DistincUserTranslated, InActiveBroadcaster, False)
-
         Notifications = UsersDatabase.GetPendingNotifies()
         for Notification in Notifications:
-            MessageChoosed = random.choice(TELEGRAM_DP_BROADCASTER_TURNED_ON_LIST)
-            MessageChoosed = MessageChoosed.format(Notification.TwitchBroadcasterName)
-            await TelegramBot.send_message(Notification.TelegramUserID, MessageChoosed)
+            if not UsersDatabase.GetNotifyStatus(Notification.TelegramUserID, Notification.TwitchBroadcasterName):
+                MessageChoosed = random.choice(TELEGRAM_DP_BROADCASTER_TURNED_ON_LIST)
+                MessageChoosed = MessageChoosed.format(Notification.TwitchBroadcasterName)
+                UsersDatabase.SetNotifyStatus(Notification.TelegramUserID, Notification.TwitchBroadcasterName, False)
+                await TelegramBot.send_message(Notification.TelegramUserID, MessageChoosed)
         
-        await asyncio.sleep(600)
+        for (ActiveBroadcaster, InActiveBroadcaster) in zip(ActiveBroadcasters, InActiveBroadcasters):
+            for DistinctUser in DistinctUsers:
+                DistincUserTranslated = DistinctUser[0]
+                if(not UsersDatabase.GetNotifyStatus(DistincUserTranslated, ActiveBroadcaster)):
+                    UsersDatabase.SetNotifyStatus(DistincUserTranslated, ActiveBroadcaster, True)
+                else:
+                    DistincUserTranslated = DistinctUser[0]
+                    UsersDatabase.SetNotifyStatus(DistincUserTranslated, InActiveBroadcaster, False)
+    
+        await asyncio.sleep(20)
 
 async def Main() -> None:
     await asyncio.gather(
