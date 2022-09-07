@@ -28,6 +28,7 @@ class TwitchBotDataBase(object):
         Get User database ID from user Telegram ID.
 
         :param UserID(union: string, integer): User Telegram ID.
+        :returns string: Database ID.
         """
         Result = self.Cursor.execute("SELECT `id` FROM `users` WHERE `user_id` = ?", (UserID,))
         return Result.fetchone()[0]
@@ -37,6 +38,7 @@ class TwitchBotDataBase(object):
         Get user Telegram ID from user database ID.
 
         :param UserTelegramID(union: string, integer): database ID of the User.
+        :returns string: Telegram ID
         """        
         Result = self.Cursor.execute("SELECT `user_id` FROM `users` WHERE `id` = ?", (UserTelegramID,))
         return Result.fetchone()[0]
@@ -64,6 +66,7 @@ class TwitchBotDataBase(object):
         Check if user exists in the database.
 
         :param UserID(union: string, integer): Telegram ID of the user.
+        :returns boolean: True if the user exists in the databse, false if he's not.
         """
         Result = self.Cursor.execute("SELECT `id` FROM `users` WHERE `user_id` = ?", (UserID,))
         return bool(len(Result.fetchall()))
@@ -90,6 +93,8 @@ class TwitchBotDataBase(object):
     def GetPendingNotifies(self) -> typing.List[Notification]:
         """
         Get all (user_id's, boardcaster name's) <-- As Notification() class.
+
+        :returns List[class Notification]: List of notifications, that are needed to be processed.
         """
         Notifications = []
         
@@ -116,12 +121,12 @@ class TwitchBotDataBase(object):
         self.Cursor.execute("UPDATE linked_accounts SET notified="+NotifyValue+" WHERE followed_account='"+LinkedAccountName+"'")
         return self.Connection.commit()
 
-    def AddLinkedAccount(self, UserID : typing.Union[str, int], LinkedAccountName : str) -> bool:
+    def AddLinkedAccount(self, UserID : typing.Union[str, int], LinkedAccountName : str) -> None:
         """
         Add followed Twitch account to the linked_accounts table
 
         :param UserID(union: string, integer): Telegram ID of the user.
-        :param LinkedAccountName(string): Twitch account name of the broadcaster.        
+        :param LinkedAccountName(string): Twitch account name of the broadcaster.
         """
         self.Cursor.execute("INSERT INTO 'linked_accounts' ('users_id', 'followed_account') VALUES (?, ?)", (self.__GetUserID(UserID), LinkedAccountName))
         return self.Connection.commit()
