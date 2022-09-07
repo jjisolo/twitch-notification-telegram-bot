@@ -130,7 +130,10 @@ class TwitchBotDataBase(object):
         :param boolean: 0 means not notified, 1 means notified indeed.
         """
         Result = self.Cursor.execute("SELECT notified FROM linked_accounts WHERE users_id=? AND followed_account=?", (self.__GetUserID(UserID), LinkedAccountName))
-        return Result.fetchone()[0]
+        try:
+            return Result.fetchone()[0]
+        except:
+            return False
 
     def AddLinkedAccount(self, UserID : typing.Union[str, int], LinkedAccountName : str) -> None:
         """

@@ -53,7 +53,7 @@ async def ParseBroadcasters() -> None:
                 if(UsersDatabase.GetNotifyStatus(DistincUserTranslated, InActiveBroadcaster)):
                     UsersDatabase.SetNotifyStatus(DistincUserTranslated, InActiveBroadcaster, False)
     
-        await asyncio.sleep(1)
+        await asyncio.sleep(15)
 
 async def Main() -> None:
     await asyncio.gather(
