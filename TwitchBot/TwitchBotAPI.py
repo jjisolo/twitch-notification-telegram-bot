@@ -1,4 +1,4 @@
-import TwitchBotConfigs, requests
+import TwitchBotConfigs, requests, logging
 
 class TwitchAPI(object):
     """
@@ -45,6 +45,7 @@ class TwitchAPI(object):
         :returns boolean: True if broadcaster is live, false if he's not.
         """
         RequestURL = TwitchAPI._TTV_STREAMS_URL.format(BroadcasterNickname)
+        logging.info("Preform user-is-live-check -->" + BroadcasterNickname)        
         try:
             Request  = requests.Session().get(RequestURL, headers=self.AuthenticationHeaders).json()
             return True if len(Request["data"]) == 1 else False
