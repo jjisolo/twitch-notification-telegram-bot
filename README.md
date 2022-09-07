@@ -10,4 +10,4 @@ This bot allows you to track when your favorite streamers started streaming, you
 Write https://t.me/TwitchSpyBot right now!
 
 
-[Telgram bot screenshot](https://github.com/jjisolo/TwitchNotificationTelegramBot/raw/master/screenshot.jpg)
+![Telgram bot screenshot](https://github.com/jjisolo/TwitchNotificationTelegramBot/raw/master/screenshot.jpg)
