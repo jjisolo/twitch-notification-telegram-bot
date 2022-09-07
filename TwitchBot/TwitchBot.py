@@ -5,6 +5,8 @@ from TwitchBotBase     import TelegramBot, TelegramBotDispatcher, UsersDatabase,
 
 import asyncio, itertools
 
+NotificationList = []
+
 async def DispatcherStartPolling() -> None:
     await TelegramBotDispatcher.start_polling()
 
@@ -13,9 +15,28 @@ async def ParseBroadcasters() -> None:
         DistinctBroadcasters = UsersDatabase.GetDistinctAccounts()
         DistinctUsers        = UsersDatabase.GetDistinctUsers()
         ActiveBroadcasters   = []
+        InActiveBroadcasters = []
+
         for BroadcasterName in  DistinctBroadcasters:
-            if TwitchApi.CheckUserIsLive(BroadcasterName):
-                ActiveBroadcasters += BroadcasterName
+            BroadcasterTranslatedName = BroadcasterName[0]
+            if TwitchApi.CheckUserIsLive(BroadcasterTranslatedName):
+                ActiveBroadcasters.append(BroadcasterTranslatedName)
+            else:
+                InActiveBroadcasters.append(BroadcasterTranslatedName)
+
+        for ActiveBroadcaster in ActiveBroadcasters:
+            for DistinctUser in DistinctUsers:
+                DistincUserTranslated = DistinctUser[0]
+                UsersDatabase.SetNotifyStatus(DistincUserTranslated, ActiveBroadcaster, True)
+
+        for InActiveBroadcaster in InActiveBroadcasters:
+            for DistinctUser in DistinctUsers:
+                DistincUserTranslated = DistinctUser[0]
+                UsersDatabase.SetNotifyStatus(DistincUserTranslated, InActiveBroadcaster, False)
+
+        Notifications = UsersDatabase.GetPendingNotifies()
+        for Notification in Notifications:
+            await TelegramBot.send_message(Notification.TelegramUserID, "asdasdadasdas")
         
         await asyncio.sleep(600)
 

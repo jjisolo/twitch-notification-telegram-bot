@@ -1,7 +1,7 @@
-from aiogram        import types
-from TwitchBotBase  import TelegramBotDispatcher, TelegramBot
-from TwitchBotBase  import UsersDatabase
-from TwitchBotBase  import TwitchApi
+from aiogram          import types, Bot
+from TwitchBotBase    import TelegramBotDispatcher, TelegramBot
+from TwitchBotBase    import UsersDatabase
+from TwitchBotBase    import TwitchApi
 
 _TELEGRAM_DP_STARTMESSAGE           = "🍄Привет, {}! Теперь ты будешь получать уведомления, когда один из моих любимых стримеров начнет трансляцию!🍄"
 _TELEGRAM_DP_NO_BROADCASTERS        = "{}, ты не выбрал ни одного стримера, попробуй использовать команду !ttv [имя стримера]!"
