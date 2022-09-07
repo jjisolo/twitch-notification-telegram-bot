@@ -16,8 +16,8 @@ _TELEGRAM_DP_BROADCASTER_EXISTS     = "Стример {} уже был доба�
 async def Start(MessageIn : types.Message) -> None:
     if not UsersDatabase.UsertExists(MessageIn.from_user.id):
         UsersDatabase.AddUser(MessageIn.from_user.id)
-    await MessageIn.answer(_TELEGRAM_DP_STARTMESSAGE.format(MessageIn.from_user.first_name))
-
+    await MessageIn.answer(_TELEGRAM_DP_STARTMESSAGE.format(MessageIn.from_user.first_name))    
+    
 @TelegramBotDispatcher.message_handler(commands=["remove_ttv_sreamer"], commands_prefix="!")
 async def RemoveFollowedAccount(MessageIn : types.Message) -> None:
     BroadcasterName = MessageIn.text.split()[1]
