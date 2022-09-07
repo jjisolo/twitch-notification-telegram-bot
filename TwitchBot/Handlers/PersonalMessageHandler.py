@@ -12,6 +12,26 @@ _TELEGRAM_DP_BROADCASTER_REMOVED    = "Стример <b>{}</b> был успе�
 _TELEGRAM_DP_BROADCASTER_ADDED      = "Вы теперь отслеживаете стримера <b>{}</b>"
 _TELEGRAM_DP_BROADCASTER_EXISTS     = "Стример {} уже был добавлен в список отслеживаемых"
 
+_TELEGRAM_DP_BROADCASTER_TURNED_ON_1 = "<b>{}</b> Подрубил, скорее заходи на его стрим!"
+_TELEGRAM_DP_BROADCASTER_TURNED_ON_2 = "Псс... тут <b>{}</b> начал стримить"
+_TELEGRAM_DP_BROADCASTER_TURNED_ON_3 = "Это что стрим <b>{}</b>?? Заходи скорее!"
+_TELEGRAM_DP_BROADCASTER_TURNED_ON_4 = "<b>{}</b> Сейчас стримит, не пропусти!"
+_TELEGRAM_DP_BROADCASTER_TURNED_ON_5 = "Подрубка от <b>{}</b>!"
+_TELEGRAM_DP_BROADCASTER_TURNED_ON_6 = "Поток от <b>{}</b>, заходи скорее!"
+_TELEGRAM_DP_BROADCASTER_TURNED_ON_7 = "<b>{}</b> Подрубил! Не пропусти!"
+_TELEGRAM_DP_BROADCASTER_TURNED_ON_8 = "<b>{}</b> Начал трансляцию!"
+
+TELEGRAM_DP_BROADCASTER_TURNED_ON_LIST = [
+    _TELEGRAM_DP_BROADCASTER_TURNED_ON_1,
+    _TELEGRAM_DP_BROADCASTER_TURNED_ON_2,
+    _TELEGRAM_DP_BROADCASTER_TURNED_ON_3,
+    _TELEGRAM_DP_BROADCASTER_TURNED_ON_4,
+    _TELEGRAM_DP_BROADCASTER_TURNED_ON_5,
+    _TELEGRAM_DP_BROADCASTER_TURNED_ON_6,
+    _TELEGRAM_DP_BROADCASTER_TURNED_ON_7,
+    _TELEGRAM_DP_BROADCASTER_TURNED_ON_8
+]
+
 @TelegramBotDispatcher.message_handler(commands=["start"])
 async def Start(MessageIn : types.Message) -> None:
     if not UsersDatabase.UsertExists(MessageIn.from_user.id):

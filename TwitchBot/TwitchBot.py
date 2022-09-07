@@ -1,11 +1,10 @@
-from aiogram           import types, executor
-from TwitchBotDatabase import TwitchBotDataBase
-from Handlers          import PersonalMessageHandler
-from TwitchBotBase     import TelegramBot, TelegramBotDispatcher, UsersDatabase, TwitchApi
+from email.message import Message
+from aiogram                         import types, executor
+from TwitchBotDatabase               import TwitchBotDataBase
+from TwitchBotBase                   import TelegramBot, TelegramBotDispatcher, UsersDatabase, TwitchApi
+from Handlers.PersonalMessageHandler import TELEGRAM_DP_BROADCASTER_TURNED_ON_LIST
 
-import asyncio, itertools
-
-NotificationList = []
+import asyncio, itertools, random
 
 async def DispatcherStartPolling() -> None:
     await TelegramBotDispatcher.start_polling()
@@ -36,7 +35,9 @@ async def ParseBroadcasters() -> None:
 
         Notifications = UsersDatabase.GetPendingNotifies()
         for Notification in Notifications:
-            await TelegramBot.send_message(Notification.TelegramUserID, "asdasdadasdas")
+            MessageChoosed = random.choice(TELEGRAM_DP_BROADCASTER_TURNED_ON_LIST)
+            MessageChoosed = MessageChoosed.format(Notification.TwitchBroadcasterName)
+            await TelegramBot.send_message(Notification.TelegramUserID, MessageChoosed)
         
         await asyncio.sleep(600)
 
