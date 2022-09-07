@@ -1,4 +1,4 @@
-import sqlite3, typing, dataclassesm, logging
+import sqlite3, typing, dataclasses, logging
 
 @dataclasses.dataclass
 class Notification(object):
@@ -78,7 +78,7 @@ class TwitchBotDataBase(object):
 
         :param UserID(union: string, integer): Telegram ID of the user.
         """
-        logging.info("[db] Adding new user to the database --> ID:" + UserID)        
+        logging.info("[db] Adding new user to the database --> ID:" + str(UserID))        
         self.Cursor.execute("INSERT INTO 'users' ('user_id') VALUES (?)", (UserID,))
         return self.Connection.commit()
 
@@ -89,7 +89,7 @@ class TwitchBotDataBase(object):
         :param UserID(union: string, integer): Telegram ID of the user.
         :param LinkedAccountName(string): Twitch account name of the broadcaster.
         """
-        logging.info("[db] Adding new linked accout to the database --> ID: {UserID}, NAME: {LinkedAccountName}")        
+        logging.info("[db] Adding new linked accout to the database --> ID: {}, NAME: {}".format(UserID, LinkedAccountName))        
         self.Cursor.execute("DELETE FROM linked_accounts WHERE users_id = ? AND followed_account = '"+LinkedAccountName+"'", (self.__GetUserID(UserID),))
         return self.Connection.commit()
     
@@ -121,7 +121,7 @@ class TwitchBotDataBase(object):
         :param NotifyStatus(bool): 0 means do not notify, 1 means notify.
         """
         NotifyValue = "1" if NotifyStatus else "0"
-        logging.info("[db] Setting notify status --> ID: {UserID}, NAME: {LinkedAccountName}, STATUS: {NotifyStatus}")        
+        logging.info("[db] Setting notify status --> ID: {}, NAME: {}, STATUS: {}".format(UserID, LinkedAccountName, NotifyStatus))        
         self.Cursor.execute("UPDATE linked_accounts SET notified="+NotifyValue+" WHERE followed_account='"+LinkedAccountName+"'")
         return self.Connection.commit()
 
@@ -146,7 +146,7 @@ class TwitchBotDataBase(object):
         :param UserID(union: string, integer): Telegram ID of the user.
         :param LinkedAccountName(string): Twitch account name of the broadcaster.
         """
-        logging.info("[db] Adding new account to the database --> ID: {UserID}, NAME: {LinkedAccountName}")        
+        logging.info("[db] Adding new account to the database --> ID: {}, NAME: {}".format(UserID, LinkedAccountName))        
         self.Cursor.execute("INSERT INTO 'linked_accounts' ('users_id', 'followed_account') VALUES (?, ?)", (self.__GetUserID(UserID), LinkedAccountName))
         return self.Connection.commit()
 

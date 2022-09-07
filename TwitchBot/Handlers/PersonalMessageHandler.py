@@ -50,14 +50,14 @@ async def process_inline_buttons_callbacks(callback_query: types.CallbackQuery):
     """
     if callback_query.data[1:] == "add_ttv_streamer":
         await AddBroadcasterForm.BroadcasterNickname.set()
-        logging.info("[pm-handler] Starting 'Add broadcaster' action --> ID:" + callback_query.from_user.id)        
+        logging.info("[pm-handler] Starting 'Add broadcaster' action --> ID:" + str(callback_query.from_user.id))        
         await TelegramBot.send_message(callback_query.from_user.id, text="Введи ник стримера на твиче которого ты хочешь отслеживать")
     if callback_query.data[1:] == "remove_ttv_streamer":
         await RemBroadcasterForm.BroadcasterNickname.set()   
-        logging.info("[pm-handler] Starting 'Remove broadcaster' action --> ID:" + callback_query.from_user.id)             
+        logging.info("[pm-handler] Starting 'Remove broadcaster' action --> ID:" + str(callback_query.from_user.id))             
         await TelegramBot.send_message(callback_query.from_user.id, text="Введи ник стримера на твиче которого ты хочешь прекратить отслеживать")
     if callback_query.data[1:] == "get_followed_accounts":
-        logging.info("[pm-handler] Starting 'Get followed accounts' action --> ID:" + callback_query.from_user.id)             
+        logging.info("[pm-handler] Starting 'Get followed accounts' action --> ID:" + str(callback_query.from_user.id))             
         LinkedTwitchAccounts = UsersDatabase.GetLinkedTwitchAccounts(callback_query.from_user.id)
         MessageAnswer = _TELEGRAM_DP_CURRENT_BROADCASTS
         if(len(LinkedTwitchAccounts)):
@@ -68,7 +68,7 @@ async def process_inline_buttons_callbacks(callback_query: types.CallbackQuery):
                     MessageAnswer += "\n" + _TELEGRAM_DP_IS_STREAMING_TEMPLATE.format(TwitchAccountName, "twitch")
                 else:
                     MessageAnswer += "\n" + _TELEGRAM_DP_NOT_STREAMING_TEMPLATE.format(TwitchAccountName, "twitch")
-        logging.info("[pm-handler] Sending message --> " + callback_query.from_user.id)             
+        logging.info("[pm-handler] Sending message --> " + str(callback_query.from_user.id))             
         await TelegramBot.send_message(callback_query.from_user.id, text=MessageAnswer)    
 
 @TelegramBotDispatcher.message_handler(state=AddBroadcasterForm.BroadcasterNickname)
@@ -77,18 +77,18 @@ async def process_name(MessageIn: types.Message, state: FSMContext):
     Process broadcaster name form end(means when user already sended broadcaster's name).
     *Add following
     """
-    logging.info("[pm-handler] Ending 'Add broadcaster' action --> ID: " + MessageIn.from_user.id)             
+    logging.info("[pm-handler] Ending 'Add broadcaster' action --> ID: " + str(MessageIn.from_user.id))             
     await state.finish()
     BroadcasterName = MessageIn.text
     LinkedTwitchAccounts = UsersDatabase.GetLinkedTwitchAccounts(MessageIn.from_user.id)
     if(len(LinkedTwitchAccounts)):
         for TwitchAccount in LinkedTwitchAccounts:
             if TwitchAccount[2] == BroadcasterName:
-                logging.info("[pm-handler] Sending message --> ID: " + MessageIn.from_user.id)             
+                logging.info("[pm-handler] Sending message --> ID: " + str(MessageIn.from_user.id))             
                 await MessageIn.answer(_TELEGRAM_DP_BROADCASTER_EXISTS.format(BroadcasterName)) 
                 return
     UsersDatabase.AddLinkedAccount(MessageIn.from_user.id, BroadcasterName)
-    logging.info("[pm-handler] Send message --> ID: " + MessageIn.from_user.id)             
+    logging.info("[pm-handler] Send message --> ID: " + str(MessageIn.from_user.id))             
     await MessageIn.reply(_TELEGRAM_DP_BROADCASTER_ADDED.format(BroadcasterName))
 
 @TelegramBotDispatcher.message_handler(state=RemBroadcasterForm.BroadcasterNickname)
@@ -97,11 +97,11 @@ async def process_name(MessageIn: types.Message, state: FSMContext):
     Process broadcaster name form end(means when user already sended broadcaster's name).
     *Remove following
     """
-    logging.info("[pm-handler] Ending 'Remove broadcaster' action --> ID: " + MessageIn.from_user.id)             
+    logging.info("[pm-handler] Ending 'Remove broadcaster' action --> ID: " + str(MessageIn.from_user.id))             
     await state.finish()
     BroadcasterName = MessageIn.text
     UsersDatabase.RemoveLinkedAccount(MessageIn.from_user.id, BroadcasterName)
-    logging.info("[pm-handler] Sending message --> ID: " + MessageIn.from_user.id)             
+    logging.info("[pm-handler] Sending message --> ID: " + str(MessageIn.from_user.id))             
     await MessageIn.answer(_TELEGRAM_DP_BROADCASTER_REMOVED.format(BroadcasterName), reply_markup=types.ReplyKeyboardRemove())
 
 @TelegramBotDispatcher.message_handler(commands=["menu"])
@@ -109,7 +109,7 @@ async def Menu(MessageIn : types.Message) -> None:
     """
     Send menu form to the user.
     """
-    logging.info("[pm-handler] Sending menu form to --> ID: " + MessageIn.from_user.id)             
+    logging.info("[pm-handler] Sending menu form to --> ID: " + str(MessageIn.from_user.id))             
     await MessageIn.answer(_TELEGRAM_DP_CHOOSE_VARIANT, reply_markup=StartInlineKeyboard)
 
 @TelegramBotDispatcher.message_handler(commands=["start"])
@@ -117,10 +117,10 @@ async def Start(MessageIn : types.Message) -> None:
     """
     Send start form to the user.
     """
-    logging.info("[pm-handler] Send start form --> ID: " + MessageIn.from_user.id)             
+    logging.info("[pm-handler] Send start form --> ID: " + str(MessageIn.from_user.id))             
     if not UsersDatabase.UsertExists(MessageIn.from_user.id):
-        logging.info("[pm-handler] Registered new user --> ID: " + MessageIn.from_user.id)             
+        logging.info("[pm-handler] Registered new user --> ID: " + str(MessageIn.from_user.id))             
         UsersDatabase.AddUser(MessageIn.from_user.id)
-    logging.info("[pm-handler] Sending message --> ID: " + MessageIn.from_user.id)             
+    logging.info("[pm-handler] Sending message --> ID: " + str(MessageIn.from_user.id))             
     await MessageIn.answer(_TELEGRAM_DP_STARTMESSAGE.format(MessageIn.from_user.first_name), reply_markup=types.ReplyKeyboardRemove())    
     await MessageIn.answer(_TELEGRAM_DP_CHOOSE_VARIANT, reply_markup=StartInlineKeyboard)
