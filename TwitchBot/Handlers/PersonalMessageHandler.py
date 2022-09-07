@@ -10,6 +10,7 @@ _TELEGRAM_DP_NOT_STREAMING_TEMPLATE = "❌ <b>{}</b>({}) - Оффлайн"
 _TELEGRAM_DP_IS_STREAMING_TEMPLATE  = "✅ <b>{}</b>({}) - Онлайн"
 _TELEGRAM_DP_BROADCASTER_REMOVED    = "Стример <b>{}</b> был успешно удален из списка отслеживаемых"
 _TELEGRAM_DP_BROADCASTER_ADDED      = "Вы теперь отслеживаете стримера <b>{}</b>"
+_TELEGRAM_DP_BROADCASTER_EXISTS     = "Стример {} уже был добавлен в список отслеживаемых"
 
 @TelegramBotDispatcher.message_handler(commands=["start"])
 async def Start(MessageIn : types.Message) -> None:
@@ -26,6 +27,12 @@ async def RemoveFollowedAccount(MessageIn : types.Message) -> None:
 @TelegramBotDispatcher.message_handler(commands=["add_ttv_streamer"], commands_prefix="!")
 async def AddFollowedAccount(MessageIn : types.Message) -> None:
     BroadcasterName = MessageIn.text.split()[1]
+    LinkedTwitchAccounts = UsersDatabase.GetLinkedTwitchAccounts(MessageIn.from_user.id)
+    if(len(LinkedTwitchAccounts)):
+        for TwitchAccount in LinkedTwitchAccounts:
+            if TwitchAccount[2] == BroadcasterName:
+                await MessageIn.answer(_TELEGRAM_DP_BROADCASTER_EXISTS.format(BroadcasterName)) 
+                return
     UsersDatabase.AddLinkedAccount(MessageIn.from_user.id, BroadcasterName)
     await MessageIn.answer(_TELEGRAM_DP_BROADCASTER_ADDED.format(BroadcasterName))   
 
