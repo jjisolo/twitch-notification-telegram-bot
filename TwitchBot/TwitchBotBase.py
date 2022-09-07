@@ -6,7 +6,6 @@ import TwitchBotConfigs, logging
 
 logging.basicConfig(level=logging.INFO)
 
-
 TelegramBot           = Bot(token=TwitchBotConfigs.BOT_TOKEN, parse_mode="HTML")
 TelegramBotDispatcher = Dispatcher(TelegramBot)
 UsersDatabase         = TwitchBotDataBase("telegram_users.db")
