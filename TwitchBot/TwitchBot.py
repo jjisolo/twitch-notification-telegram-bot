@@ -11,13 +11,12 @@ async def DispatcherStartPolling() -> None:
 async def ParseBroadcasters() -> None:
     while True:
         DistinctBroadcasters = UsersDatabase.GetDistinctAccounts()
+        DistinctUsers        = UsersDatabase.GetDistinctUsers()
         ActiveBroadcasters   = []
         for BroadcasterName in  DistinctBroadcasters:
             if TwitchApi.CheckUserIsLive(BroadcasterName):
                 ActiveBroadcasters += BroadcasterName
         
-        
-
         await asyncio.sleep(600)
 
 async def Main() -> None:

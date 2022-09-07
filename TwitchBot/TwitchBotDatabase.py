@@ -21,9 +21,13 @@ class TwitchBotDataBase(object):
         self.Cursor.execute("DELETE FROM linked_accounts WHERE users_id = ? AND followed_account = '"+LinkedAccountName+"'", (self.GetUserID(UserID),))
         return self.Connection.commit()
     
-    def GetDistinctAccounts(self) -> str:
+    def GetDistinctAccounts(self) -> tuple[str]:
         Result = self.Cursor.execute("SELECT DISTINCT followed_account FROM linked_accounts")
         return Result.fetchall()
+
+    def GetDistinctUsers(self) -> tuple[str]:
+       Result = self.Cursor.execute("SELECT DISTINCT user_id FROM users")
+       return Result.fetchall()
 
     def AddLinkedAccount(self, UserID : str, LinkedAccountName : str) -> bool:
         self.Cursor.execute("INSERT INTO 'linked_accounts' ('users_id', 'followed_account') VALUES (?, ?)", (self.GetUserID(UserID), LinkedAccountName))

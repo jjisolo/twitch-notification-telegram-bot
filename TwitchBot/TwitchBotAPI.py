@@ -19,7 +19,6 @@ class TwitchAPI(object):
             Request  = requests.Session().get(RequestURL, headers=self.AuthenticationHeaders).json()
             return True if len(Request["data"]) == 1 else False
         except Exception as e:
-            print(e)
             return False
     
     def GetAccessToken(self) -> str:
