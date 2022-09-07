@@ -1,4 +1,3 @@
-from xml.etree.ElementTree import TreeBuilder
 from aiogram           import types, executor
 from TwitchBotDatabase import TwitchBotDataBase
 from Handlers          import PersonalMessageHandler
@@ -17,6 +16,8 @@ async def ParseBroadcasters() -> None:
             if TwitchApi.CheckUserIsLive(BroadcasterName):
                 ActiveBroadcasters += BroadcasterName
         
+        
+
         await asyncio.sleep(600)
 
 async def Main() -> None:
