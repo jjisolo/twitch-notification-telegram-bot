@@ -123,7 +123,7 @@ class TwitchBotDataBase(object):
         :param UserID(union: string, integer): Telegram ID of the user.
         :param LinkedAccountName(string): Twitch account name of the broadcaster.        
         """
-        self.Cursor.execute("INSERT INTO 'linked_accounts' ('users_id', 'followed_account') VALUES (?, ?)", (self.GetUserID(UserID), LinkedAccountName))
+        self.Cursor.execute("INSERT INTO 'linked_accounts' ('users_id', 'followed_account') VALUES (?, ?)", (self.__GetUserID(UserID), LinkedAccountName))
         return self.Connection.commit()
 
     def GetLinkedTwitchAccounts(self, UserID : typing.Union[str, int]) -> typing.Tuple[str]:
@@ -133,7 +133,7 @@ class TwitchBotDataBase(object):
         :param UserID(union: string, integer): Telegram ID of the user.
         :returns Tuple[string]: Followed Twitch accounts. 
         """
-        Result = self.Cursor.execute("SELECT * FROM 'linked_accounts' WHERE `users_id` = ?", (self.GetUserID(UserID),))
+        Result = self.Cursor.execute("SELECT * FROM 'linked_accounts' WHERE `users_id` = ?", (self.__GetUserID(UserID),))
         return Result.fetchall()
 
     def Close(self) -> None:
