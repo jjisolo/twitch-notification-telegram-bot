@@ -2,35 +2,95 @@ import sqlite3, typing, dataclasses
 
 @dataclasses.dataclass
 class Notification(object):
+    """
+    Base Notification class
+    """
     TelegramUserID        : typing.Union[str, int]
     TwitchBroadcasterName : str 
 
 class TwitchBotDataBase(object):
+    """
+    Base twitch database class, that aggregates
+    different methods for working with sqlite databse.
+    """
+
     def __init__(self, DatabaseFilename : str) -> None:
+        """
+        Connect to the database.
+
+        :param DatabaseFilename(string): Filename of the database. 
+        """
         self.Connection = sqlite3.connect(DatabaseFilename)
-        self.Cursor = self.Connection.cursor()
+        self.Cursor     = self.Connection.cursor()
     
-    def UsertExists(self, UserID : str) -> bool:
+    def __GetUserID(self, UserID : typing.Union[str, int]) -> str:
+        """
+        Get User database ID from user Telegram ID.
+
+        :param UserID(union: string, integer): User Telegram ID.
+        """
+        Result = self.Cursor.execute("SELECT `id` FROM `users` WHERE `user_id` = ?", (UserID,))
+        return Result.fetchone()[0]
+
+    def __GetUserTelegramID(self, UserTelegramID : typing.Union[str, int]) -> str:
+        """
+        Get user Telegram ID from user database ID.
+
+        :param UserTelegramID(union: string, integer): database ID of the User.
+        """        
+        Result = self.Cursor.execute("SELECT `user_id` FROM `users` WHERE `id` = ?", (UserTelegramID,))
+        return Result.fetchone()[0]
+
+    def GetDistinctAccounts(self) -> typing.Tuple[str]: 
+        """
+        Get distinct twitch accounts from database
+
+        :returns tuple[str]: Distinct twitch accounts.
+        """
+        Result = self.Cursor.execute("SELECT DISTINCT followed_account FROM linked_accounts")
+        return Result.fetchall()
+
+    def GetDistinctUsers(self) -> typing.Tuple[str]:
+       """
+       Get distinct users from database.
+
+       :returns tuple[str]: Distinct users.
+       """
+       Result = self.Cursor.execute("SELECT DISTINCT user_id FROM users")
+       return Result.fetchall()
+
+    def UsertExists(self, UserID : typing.Union[str, int]) -> bool:
+        """
+        Check if user exists in the database.
+
+        :param UserID(union: string, integer): Telegram ID of the user.
+        """
         Result = self.Cursor.execute("SELECT `id` FROM `users` WHERE `user_id` = ?", (UserID,))
         return bool(len(Result.fetchall()))
 
-    def GetUserID(self, UserID : str) -> str:
-        Result = self.Cursor.execute("SELECT `id` FROM `users` WHERE `user_id` = ?", (UserID,))
-        return Result.fetchone()[0]
+    def AddUser(self, UserID : typing.Union[str, int]) -> None:
+        """
+        Add new user to the database
 
-    def GetUserTelegramID(self, UserID : str) -> str:
-        Result = self.Cursor.execute("SELECT `user_id` FROM `users` WHERE `id` = ?", (UserID,))
-        return Result.fetchone()[0]
-
-    def AddUser(self, UserID : str) -> None:
+        :param UserID(union: string, integer): Telegram ID of the user.
+        """
         self.Cursor.execute("INSERT INTO 'users' ('user_id') VALUES (?)", (UserID,))
         return self.Connection.commit()
 
-    def RemoveLinkedAccount(self, UserID : str, LinkedAccountName : str) -> None:
-        self.Cursor.execute("DELETE FROM linked_accounts WHERE users_id = ? AND followed_account = '"+LinkedAccountName+"'", (self.GetUserID(UserID),))
+    def RemoveLinkedAccount(self, UserID : typing.Union[str, int], LinkedAccountName : str) -> None:
+        """
+        Remove followed account from database.
+
+        :param UserID(union: string, integer): Telegram ID of the user.
+        :param LinkedAccountName(string): Twitch account name of the broadcaster.
+        """
+        self.Cursor.execute("DELETE FROM linked_accounts WHERE users_id = ? AND followed_account = '"+LinkedAccountName+"'", (self.__GetUserID(UserID),))
         return self.Connection.commit()
     
     def GetPendingNotifies(self) -> typing.List[Notification]:
+        """
+        Get all (user_id's, boardcaster name's) <-- As Notification() class.
+        """
         Notifications = []
         
         DataBaseExecutionResult = self.Cursor.execute("SELECT followed_account, users_id FROM linked_accounts WHERE notified=1")
@@ -38,33 +98,47 @@ class TwitchBotDataBase(object):
 
         for FollowedAccountPendingNotify in DataBaseExecutionResult:
             Notifications.append(Notification(
-                self.GetUserTelegramID(FollowedAccountPendingNotify[1]),
+                self.__GetUserTelegramID(FollowedAccountPendingNotify[1]),
                 FollowedAccountPendingNotify[0]
             ))
 
         return (Notifications)
 
-    def SetNotifyStatus(self, UserID : str, LinkedAccountName : str, NotifyStatus : bool) -> None:
+    def SetNotifyStatus(self, UserID : typing.Union[str, int], LinkedAccountName : str, NotifyStatus : bool) -> None:
+        """
+        Set notification flags to Users.
+        
+        :param UserID(union: string, integer): Telegram ID of the user.
+        :param LinkedAccountName(string): Twitch account name of the broadcaster.
+        :param NotifyStatus(bool): 0 means do not notify, 1 means notify.
+        """
         NotifyValue = "1" if NotifyStatus else "0"
         self.Cursor.execute("UPDATE linked_accounts SET notified="+NotifyValue+" WHERE followed_account='"+LinkedAccountName+"'")
         return self.Connection.commit()
 
-    def GetDistinctAccounts(self) -> tuple[str]: 
-        Result = self.Cursor.execute("SELECT DISTINCT followed_account FROM linked_accounts")
-        return Result.fetchall()
+    def AddLinkedAccount(self, UserID : typing.Union[str, int], LinkedAccountName : str) -> bool:
+        """
+        Add followed Twitch account to the linked_accounts table
 
-    def GetDistinctUsers(self) -> tuple[str]:
-       Result = self.Cursor.execute("SELECT DISTINCT user_id FROM users")
-       return Result.fetchall()
-
-    def AddLinkedAccount(self, UserID : str, LinkedAccountName : str) -> bool:
+        :param UserID(union: string, integer): Telegram ID of the user.
+        :param LinkedAccountName(string): Twitch account name of the broadcaster.        
+        """
         self.Cursor.execute("INSERT INTO 'linked_accounts' ('users_id', 'followed_account') VALUES (?, ?)", (self.GetUserID(UserID), LinkedAccountName))
         return self.Connection.commit()
 
-    def GetLinkedTwitchAccounts(self, UserID : str) -> str:
+    def GetLinkedTwitchAccounts(self, UserID : typing.Union[str, int]) -> typing.Tuple[str]:
+        """
+        Get followed Twitch account of the user.
+
+        :param UserID(union: string, integer): Telegram ID of the user.
+        :returns Tuple[string]: Followed Twitch accounts. 
+        """
         Result = self.Cursor.execute("SELECT * FROM 'linked_accounts' WHERE `users_id` = ?", (self.GetUserID(UserID),))
         return Result.fetchall()
 
     def Close(self) -> None:
+        """
+        Close the connection to the database.
+        """
         self.Connection.close()
 
