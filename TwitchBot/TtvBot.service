@@ -1,0 +1,12 @@
+[Unit]
+Description=Twitch Telegram Bot service
+
+[Service]
+WorkingDirectory=/usr/local/lib/bot/
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/usr/local/lib/bot/venv/bin/python3 /home/dune/TwitchNotificationBot/TwitchBot.py
+
+Restart=on-failure
+
+[Install]
+WantedBy=default.target
